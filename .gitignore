@@ -1,0 +1,10 @@
+arc/
+.cache/
+.cmake/
+Testing/
+Makefile
+CMakeFiles/
+compile_commands.json
+CTestTestfile.cmake
+CMakeCache.txt
+build/

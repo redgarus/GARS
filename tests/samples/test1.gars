@@ -1,0 +1,15 @@
+war a: int = 123 + 123*34,
+    b: str = "sds";
+
+alive by[a > 5] {
+    a+6*3/4+7<5;
+}
+    
+tren int abs[int b, int c] {
+    return abs[b] + c;
+}
+    
+if((a < 3) > 0) do
+    abs[a];
+
+213 < 3;
