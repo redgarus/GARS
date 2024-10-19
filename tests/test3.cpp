@@ -23,6 +23,7 @@
 #include <bits/stdc++.h>
 #include <llvm/IR/Constant.h>
 #include <llvm/IR/ConstantFolder.h>
+#include <llvm/IR/DataLayout.h>
 #include <llvm/IR/Instruction.h>
 
 using namespace llvm;
@@ -97,6 +98,9 @@ int GenerateObjFile(std::string Filename) {
 int main() {
     InitializeModule();
 
+    FunctionType *malloc_ft = FunctionType::get(Type::getInt8Ty(*TheContext)->getPointerTo(), { Type::getInt32Ty(*TheContext) }, false);
+    Function *malloc_f = Function::Create(malloc_ft, Function::ExternalLinkage, "malloc", TheModule.get());
+    
     std::vector<Type *> printf_args{ PointerType::get(Type::getInt8Ty(*TheContext), 0) };
     FunctionType *printf_type = FunctionType::get(Type::getInt32Ty(*TheContext), printf_args, true);
     Function *printf_func = Function::Create(printf_type, Function::ExternalLinkage, "printf", TheModule.get());
@@ -105,57 +109,33 @@ int main() {
     FunctionType *main_type = FunctionType::get(Type::getInt64Ty(*TheContext), false);
     Function *main_func = Function::Create(main_type, Function::ExternalLinkage, "main", TheModule.get());
     
-    BasicBlock *entry = BasicBlock::Create(*TheContext, "entry", main_func);            
-    
-    ArrayType *tarr = ArrayType::get(Type::getInt16Ty(*TheContext), 3);
-    int num = 3;
+    BasicBlock *entry = BasicBlock::Create(*TheContext, "entry", main_func);        
 
-    StructType *mystruct = StructType::create(*TheContext, "variable-array");
-    mystruct->setBody({ Type::getInt64Ty(*TheContext), PointerType::get(Type::getInt64Ty(*TheContext), 0) });
+    Type *tint = Type::getInt64Ty(*TheContext);
+    Type *tarr = ArrayType::get(tint, 3);
 
-        
-    FunctionType *ft = FunctionType::get(Type::getInt64Ty(*TheContext), { PointerType::get(mystruct, 0), Type::getInt64Ty(*TheContext) }, false);
-    Function *F = Function::Create(ft, Function::ExternalLinkage, "test", TheModule.get());
-
-    
-    Builder->SetInsertPoint(entry);
-    
-    AllocaInst *alloc = Builder->CreateAlloca(mystruct, nullptr, "array_ptr");
-    AllocaInst *alloc1 = Builder->CreateAlloca(tarr, nullptr, "array");
-
-    Builder->CreateStore(ConstantArray::get(tarr, {
-                ConstantInt::get(*TheContext, APInt(64, 1)),
-                ConstantInt::get(*TheContext, APInt(64, 2)),
-                ConstantInt::get(*TheContext, APInt(64, 3))
-            }), alloc1);
-
-    Value *col_ptr = Builder->CreateGEP(mystruct, alloc, {
-            ConstantInt::get(*TheContext, APInt(64, 0))
+    /*
+    Value *arr = ConstantArray::get(tarr, {
+            ConstantInt::get(*TheContext, APInt(64, 1)),
+            ConstantInt::get(*TheContext, APInt(64, 2)),
+            ConstantInt::get(*TheContext, APInt(64, 3))
         });
-    
-    Value *array_ptr = Builder->CreateGEP(mystruct, alloc, {
+    */
+    StructType *str = StructType::create(*TheContext, "mystruct");
+    str->setBody({tint, tarr});
+
+    Builder->SetInsertPoint(entry);
+
+    Value *gep = Builder->CreateGEP(str, ConstantPointerNull::get(PointerType::get(str, 0)), {
             ConstantInt::get(*TheContext, APInt(64, 1))
         });
 
-    Builder->CreateStore(ConstantInt::get(*TheContext, APInt(64, 3)), col_ptr);
-    Builder->CreateStore(alloc1, array_ptr);
+    Value *val = Builder->CreatePointerCast(gep, Type::getInt64Ty(*TheContext), "ggg");
 
-    Builder->CreateCall(F, { alloc, ConstantInt::get(*TheContext, APInt(64, 2)) }, "calltmp");
-        
-    Builder->CreateRet(ConstantInt::get(*TheContext, APInt(64, 0)));
-
-    BasicBlock *bb = BasicBlock::Create(*TheContext, "entry", F);
-
-    Builder->SetInsertPoint(bb);
-    
-    
-    
-    std::vector<Value *> args{
-        Builder->CreateGlobalStringPtr("%i\n", "test"),
-        // ggg
-                            };
-    
-    Builder->CreateCall(printf_func, args, "calltmp");
+    Builder->CreateCall(printf_func, {
+            Builder->CreateGlobalStringPtr("%i\n", "t"),
+            val
+        }, "calltmp");
     
     Builder->CreateRet(ConstantInt::get(*TheContext, APInt(64, 0)));
     

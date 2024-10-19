@@ -1,35 +1,46 @@
 #pragma once
 
+#include <unordered_map>
+#include <unordered_set>
 #include <memory>
+#include <string>
 
-using std::shared_ptr;
+using std::shared_ptr, std::unordered_map, std::unordered_set, std::string;
 
-class ValueType {
-public:
+struct ValueType {
     enum type {
         INT, ARRAY, NONETYPE
     };
 
-    virtual type get() const = 0;
-    virtual shared_ptr<ValueType> getSub() const = 0;
+    virtual shared_ptr<ValueType> getSub() const { return nullptr; }
+    virtual type get() const { return NONETYPE; }
+    virtual int size() const { return 0; }
+    
     virtual ~ValueType() = default;
 };
 
-class IntType: public ValueType {
-public:
+struct IntType: public ValueType {
     type get() const override { return INT; }
-    shared_ptr<ValueType> getSub() const override { return nullptr; }
 };
 
-class ArrayType: public ValueType {
+struct ArrayType: public ValueType {
     shared_ptr<ValueType> SubType;
-public:
+    int arr_size;
+
+    int size() const override { return arr_size; }
     type get() const override { return ARRAY; }
+    
     shared_ptr<ValueType> getSub() const override { return SubType; }
+
+    ArrayType(shared_ptr<ValueType> subt, int arr_size) : SubType(subt), arr_size(arr_size) {}
 };
 
-class NoneType: public ValueType {
-public:
-    type get() const override { return NONETYPE; }
-    shared_ptr<ValueType> getSub() const override { return nullptr; }
-};
+struct NoneType: public ValueType {};
+
+shared_ptr<ValueType> maxType(shared_ptr<ValueType>, shared_ptr<ValueType>);
+bool matchType(const std::string&, shared_ptr<ValueType>);
+
+bool operator==(shared_ptr<ValueType>, ValueType::type);
+bool operator!=(shared_ptr<ValueType>, ValueType::type);
+bool operator==(shared_ptr<ValueType>, shared_ptr<ValueType>);
+bool operator!=(shared_ptr<ValueType>, shared_ptr<ValueType>);

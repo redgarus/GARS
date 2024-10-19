@@ -1,4 +1,6 @@
 #include "../include/visitor.hpp"
+#include "../include/codegen.hpp"
+#include "../include/parser.hpp"
 #include "../include/lexer.hpp"
 #include "../include/token.hpp"
 
@@ -23,4 +25,22 @@ void CompilerVisitor::visit(Lexer& lex) {
         tokens.push_back(CurrTok);
         CurrTok = lex.getNextToken();
     }
+    tokens.push_back(CurrTok);
+}
+
+void CompilerVisitor::visit(Parser& parser) {
+    parser.setTokens(std::move(tokens));
+    AST = parser.ParseInput();
+}
+
+void CompilerVisitor::visit(Codegen& code) {
+    CodeVisitor *visitor = new CodeVisitor();
+
+    visitor->run();
+    
+    AST->accept(*visitor);
+        
+    mod = std::move(visitor->getModule());
+
+    mod->print(llvm::errs(), nullptr);
 }

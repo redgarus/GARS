@@ -4,286 +4,238 @@
 #include <string>
 #include <vector>
 
+#include "visitor.hpp"
+#include "ast_visitor.hpp"
 #include "type.hpp"
 #include "token.hpp"
-#include "table.hpp"
+#include "codegen.hpp"
 
-using std::shared_ptr, std::unique_ptr, std::make_unique, std::make_shared, std::string, std::vector;
+using std::shared_ptr, std::unique_ptr, std::make_unique, std::make_shared, std::string, std::vector, std::pair;
 
-class Stmt;
+// Abstract Classes
 
-class WarStmt;
-class TrenStmt;
-class ParenStmts;
-class RetStmt;
-class IfStmt;
-class AliveStmt;
-class HighExpr;
+struct Node {
+    virtual Value *accept(ASTVisitor&) = 0;
 
-class Expr;
-class AssignExpr;
-class BoolExpr;
-class AddExpr;
-class TermExpr;
-class IDExpr;
-class CallExpr;
-class IntExpr;
-class ArrayExpr;
-class ParenExpr;
-
-class Input;
-
-class ASTVisitor {
-public:
-    virtual void visit(WarStmt&) = 0;
-    virtual void visit(TrenStmt&) = 0;
-    virtual void visit(RetStmt&) = 0;
-    virtual void visit(IfStmt&) = 0;
-    virtual void visit(AliveStmt&) = 0;
-    virtual void visit(HighExpr&) = 0;
-    virtual void visit(ParenStmts&) = 0;
-
-    virtual void visit(AssignExpr&) = 0;
-    virtual void visit(BoolExpr&) = 0;
-    virtual void visit(AddExpr&) = 0;
-    virtual void visit(TermExpr&) = 0;
-    virtual void visit(IDExpr&) = 0;
-    virtual void visit(CallExpr&) = 0;
-    virtual void visit(IntExpr&) = 0;
-    virtual void visit(ArrayExpr&) = 0;
-    virtual void visit(ParenExpr&) = 0;
-
-    virtual void visit(Input&) = 0;
+    virtual ~Node() = default;
 };
 
-class Node {
-    virtual void accept(shared_ptr<ASTVisitor>) = 0;
-};
-
-class Stmt {
-public:
+struct Stmt: public Node {
     virtual ~Stmt() = default;
 };
 
-class Expr {
-public:
+struct Expr: public Node {
     virtual shared_ptr<ValueType> getType() const = 0;
     virtual ~Expr() = default;
 };
 
-class AssignExpr: public Expr {
+// Expressions
+
+struct AssignExpr: public Expr {
     unique_ptr<Expr> LHS, RHS;
     shared_ptr<ValueType> type;
-public:
+
     shared_ptr<ValueType> getType() const { return type; }
     
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
 
-    AssignExpr(unique_ptr<Expr> lhs, unique_ptr<Expr> rhs, shared_ptr<ValueType> Tval)
-        : LHS(std::move(lhs)), RHS(std::move(rhs)), type(Tval) {}
+    AssignExpr(unique_ptr<Expr> lhs, unique_ptr<Expr> rhs, shared_ptr<ValueType> type)
+        : LHS(std::move(lhs)), RHS(std::move(rhs)), type(type) {}
 };
 
 
-class BoolExpr: public Expr {
-    shared_ptr<ValueType> type;
-    unique_ptr<Expr> LHS, RHS;
-    TOKEN::lexeme OP;    
-public:
-    shared_ptr<ValueType> getType() const { return type; }
-    
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
-    
-    BoolExpr(TOKEN::lexeme OP, unique_ptr<Expr> lhs, unique_ptr<Expr> rhs, shared_ptr<ValueType> Tval)
-        : OP(OP), LHS(std::move(lhs)), RHS(std::move(rhs)), type(Tval) {}
-};
-
-
-class AddExpr: public Expr {
-    shared_ptr<ValueType> type;
+struct BoolExpr: public Expr {    
     unique_ptr<Expr> LHS, RHS;
     TOKEN::lexeme OP;
-public:
+    shared_ptr<ValueType> type;
+
     shared_ptr<ValueType> getType() const { return type; }
     
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
     
-    AddExpr(TOKEN::lexeme OP, unique_ptr<Expr> lhs, unique_ptr<Expr> rhs, shared_ptr<ValueType> Tval)
-        : OP(OP), LHS(std::move(lhs)), RHS(std::move(rhs)), type(Tval) {}
+    BoolExpr(TOKEN::lexeme OP, unique_ptr<Expr> lhs, unique_ptr<Expr> rhs, shared_ptr<ValueType> type)
+        : OP(OP), LHS(std::move(lhs)), RHS(std::move(rhs)), type(type) {}
 };
 
-class TermExpr: public Expr {
-    shared_ptr<ValueType> type;
+
+struct AddExpr: public Expr {
     unique_ptr<Expr> LHS, RHS;
     TOKEN::lexeme OP;
-public:
+    shared_ptr<ValueType> type;
+
+    shared_ptr<ValueType> getType() const { return type; }
+
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
+    
+    AddExpr(TOKEN::lexeme OP, unique_ptr<Expr> lhs, unique_ptr<Expr> rhs, shared_ptr<ValueType> type)
+        : OP(OP), LHS(std::move(lhs)), RHS(std::move(rhs)), type(type) {}
+};
+
+struct TermExpr: public Expr {
+    unique_ptr<Expr> LHS, RHS;
+    TOKEN::lexeme OP;
+    shared_ptr<ValueType> type;
+
     shared_ptr<ValueType> getType() const { return type; }
     
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
     
-    TermExpr(TOKEN::lexeme OP, unique_ptr<Expr> lhs, unique_ptr<Expr> rhs, shared_ptr<ValueType> Tval)
-        : OP(OP), LHS(std::move(lhs)), RHS(std::move(rhs)), type(Tval) {}
+    TermExpr(TOKEN::lexeme OP, unique_ptr<Expr> lhs, unique_ptr<Expr> rhs, shared_ptr<ValueType> type)
+        : OP(OP), LHS(std::move(lhs)), RHS(std::move(rhs)), type(type) {}
 };
 
 
-class IDExpr: public Expr {
-    shared_ptr<ValueType> type;
-    shared_ptr<Table> scope;
+struct IDExpr: public Expr {
     string name;
-public:
+    shared_ptr<ValueType> type;
+
     shared_ptr<ValueType> getType() const { return type; }
-    const string& getName() const { return name; }
+
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
     
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
-    
-    IDExpr(const string& name, shared_ptr<Table> scope, shared_ptr<ValueType> type)
-        : name(name), scope(scope), type(type) {}
+    IDExpr(const string& name, shared_ptr<ValueType> type)
+        : name(name), type(type) {}
 };
 
 
-class CallExpr: public Expr {
+struct CallExpr: public Expr {
     vector<unique_ptr<Expr>> args;
     shared_ptr<ValueType> type;
-    shared_ptr<Table> scope;
     string name;
-public:
-    shared_ptr<ValueType> getType() const { return type; }
-    const string& getName() const { return name; }
-    
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
 
-    CallExpr(const string& name, shared_ptr<Table> scope, shared_ptr<ValueType> type, vector<unique_ptr<Expr>> args)
-        : name(name), scope(scope), type(type), args(std::move(args)) {}
+    shared_ptr<ValueType> getType() const { return type; }
+
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
+
+    CallExpr(const string& name, vector<unique_ptr<Expr>> args, shared_ptr<ValueType> type)
+        : name(name), args(std::move(args)), type(type) {}
 };
 
-class IntExpr: public Expr {
+struct IntExpr: public Expr {
     shared_ptr<ValueType> type;
     ll value;
-   
-public:
-    shared_ptr<ValueType> getType() const { return type; }
 
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+    shared_ptr<ValueType> getType() const { return type; }
+    
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
 
     IntExpr(ll val) : value(val), type(make_shared<IntType>()) {}
 };
 
-class ArrayExpr: public Expr {
+struct ArrayExpr: public Expr {
     vector<unique_ptr<Expr>> elements;
     shared_ptr<ValueType> type;
-public:
-    shared_ptr<ValueType> getType() const { return type; }
 
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+    shared_ptr<ValueType> getType() const { return type; }
+    
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
 
     ArrayExpr(vector<unique_ptr<Expr>> elems, shared_ptr<ValueType> type)
         : elements(std::move(elems)), type(type) {}
 };
 
+struct ParenExpr: public Expr {
+    unique_ptr<Expr> expr;
 
-class WarStmt: public Stmt {
-    shared_ptr<Table> scope;
+    shared_ptr<ValueType> getType() const { return expr->getType(); }
+    
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
+
+    ParenExpr(unique_ptr<Expr> expr)
+        : expr(std::move(expr)) {}
+};
+
+struct IndexExpr: public Expr {
+    vector<unique_ptr<Expr>> Idxs;
+    shared_ptr<ValueType> type;
+    string name;
+
+    shared_ptr<ValueType> getType() const { return type; }
+    
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
+
+    IndexExpr(const string& name, vector<unique_ptr<Expr>> Idxs, shared_ptr<ValueType> type)
+        : name(name), Idxs(std::move(Idxs)), type(type) {}
+};
+
+
+// Statements
+
+struct WarStmt: public Stmt {
+    shared_ptr<ValueType> type;
     unique_ptr<Expr> value;
     string name;
-public:
-    const string& getName() const { return name; }
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
     
-    WarStmt(const string& name, unique_ptr<Expr> value, shared_ptr<Table> tab)
-        : scope(tab), name(name), value(std::move(value)) {}
+    WarStmt(const string& name, unique_ptr<Expr> value, shared_ptr<ValueType> type)
+        : name(name), value(std::move(value)), type(type) {}
 };
 
-class TrenStmt: public Stmt {
-    vector<shared_ptr<ValueType>> args_types;
-    shared_ptr<ValueType> type;
-    shared_ptr<Table> scope;
-    vector<string> args_names;
+struct TrenStmt: public Stmt {
+    vector<pair<string, shared_ptr<ValueType>>> args;
+    shared_ptr<ValueType> retType;
+    unique_ptr<Stmt> func_body;
     string name;
-public:
-    const string& getName() const { return name; }
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
     
-    TrenStmt(const string& name, vector<shared_ptr<ValueType>> args_types, shared_ptr<ValueType> type, shared_ptr<Table> scope, vector<string> args_names)
-        : name(name), args_types(args_types), args_names(args_names), type(type), scope(scope) {}
+    TrenStmt(const string& name, unique_ptr<Stmt> fb, shared_ptr<ValueType> type, vector<pair<string, shared_ptr<ValueType>>> args)
+        : name(name), func_body(std::move(fb)), retType(type), args(std::move(args)) {}
 };
 
 
-class RetStmt: public Stmt {
+struct RetStmt: public Stmt {
     unique_ptr<Expr> expr;
-public:
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
 
     RetStmt(unique_ptr<Expr> expr) : expr(std::move(expr)) {}
 };
 
-class IfStmt: public Stmt {
+struct IfStmt: public Stmt {
     unique_ptr<Expr> Cond;
     unique_ptr<Stmt> Body;
-public:
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
 
     IfStmt(unique_ptr<Expr> cond, unique_ptr<Stmt> body)
         : Cond(std::move(cond)), Body(std::move(body)) {}
 };
 
-class AliveStmt: public Stmt {
+struct AliveStmt: public Stmt {
     unique_ptr<Expr> Cond;
     unique_ptr<Stmt> Body;
-public:
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
 
     AliveStmt(unique_ptr<Expr> cond, unique_ptr<Stmt> body)
         : Cond(std::move(cond)), Body(std::move(body)) {}
 };
 
-class HighExpr: public Stmt {
+struct HighExpr: public Stmt {
     unique_ptr<Expr> expr;
-public:
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+    
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
     
     HighExpr(unique_ptr<Expr> expr)
         : expr(std::move(expr)) {}
 };
 
-class ParenStmts: public Stmt {
+struct ParenStmts: public Stmt {
     vector<unique_ptr<Stmt>> stmts;
-public:
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
 
     ParenStmts(vector<unique_ptr<Stmt>> stmts)
         : stmts(std::move(stmts)) {}
 };
 
-class Input: public Node {
+struct Input: public Node {
     vector<unique_ptr<Stmt>> stmts;
-public:
-    void accept(shared_ptr<ASTVisitor> visitor) { visitor->visit(*this); }
+
+    Value *accept(ASTVisitor& visitor) { return visitor.visit(*this); }
 
     Input(vector<unique_ptr<Stmt>> stmts)
         : stmts(std::move(stmts)) {}
-};
-
-class LVisitor: ASTVisitor {
-public:
-    bool lvalue;
-    string name;
-
-    void visit(WarStmt& node) override { lvalue = false; name = node.getName(); }
-    void visit(TrenStmt& node) override { lvalue = false; name = node.getName(); }
-    void visit(RetStmt& node) override { lvalue = false; }
-    void visit(IfStmt& node) override { lvalue = false; }
-    void visit(AliveStmt& node) override { lvalue = false; }
-    void visit(HighExpr& node) override { lvalue = false; }
-
-    void visit(ParenStmts& node) override { lvalue = false; }
-    void visit(AssignExpr& node) override { lvalue = false; }
-    void visit(BoolExpr& node) override { lvalue = false; }
-    void visit(AddExpr& node) override { lvalue = false; }
-    void visit(TermExpr& node) override { lvalue = false; }
-    void visit(IDExpr& node) override { lvalue = true; name = node.getName(); }
-    void visit(CallExpr& node) override { lvalue = false; name = node.getName(); }
-    void visit(IntExpr& node) override { lvalue = false; }
-    void visit(ArrayExpr& node) override { lvalue = false; }
-    void visit(ParenExpr& node) override { lvalue = false; }
-
-    void visit(Input& node) override { lvalue = false; }
 };

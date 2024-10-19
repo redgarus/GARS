@@ -3,9 +3,9 @@
 using std::cerr, std::stoll, std::unordered_map;
 
 static unordered_map<string, TOKEN::lexeme> tokTable {
-    // keywords
+   // keywords
     {"if", TOKEN::IF}, {"alive", TOKEN::ALIVE}, {"by", TOKEN::BY},
-    {"war", TOKEN::WAR}, {"you", TOKEN::YOU}, {"tren", TOKEN::TREN}, 
+    {"var", TOKEN::WAR}, {"you", TOKEN::YOU}, {"fn", TOKEN::TREN}, 
     {"REDGAR", TOKEN::REDGAR}, {"fightclub", TOKEN::FIGHTCLUB},
     {"want", TOKEN::WANT}, {"this", TOKEN::THIS}, {"do", TOKEN::DO},
     {"return", TOKEN::RETURN}, 
@@ -20,7 +20,7 @@ static unordered_map<string, TOKEN::lexeme> tokTable {
     {"{", TOKEN::LBRA}, {"}", TOKEN::RBRA},
     {"(", TOKEN::LBAR}, {")", TOKEN::RBAR},
     {"[", TOKEN::LBRACE}, {"]", TOKEN::RBRACE},
-    {":", TOKEN::COL}, {";", TOKEN::SEMICOL}, {",", TOKEN::COMMA},
+    {":", TOKEN::COL}, {";", TOKEN::SEMICOL}, {",", TOKEN::COMMA}, {"|", TOKEN::ST},
     {"+", TOKEN::PLUS}, {"-", TOKEN::MINUS}, {"/", TOKEN::DIV}, {"*", TOKEN::MUL},
     {"!", TOKEN::NOT},  {"=", TOKEN::ASSIGN}, {"<", TOKEN::LS}, {">", TOKEN::GT},
     {"!=", TOKEN::NOEQ},  {"==", TOKEN::EQ}, {"<=", TOKEN::LSEQ}, {">=", TOKEN::GTEQ}
@@ -88,4 +88,8 @@ ostream& operator<<(std::ostream& out, TOKEN tok) {
 
 bool operator==(TOKEN tok, TOKEN::lexeme tok_lex) {
     return tok.tok == tok_lex;
+}
+
+bool operator!=(TOKEN tok, TOKEN::lexeme tok_lex) {
+    return tok.tok != tok_lex;
 }

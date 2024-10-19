@@ -12,6 +12,8 @@ set(TESTS ${CMAKE_SOURCE_DIR}/tests)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(FILENAMES)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
+
 enable_testing()
 
 # LLLLLVM CON
@@ -24,3 +26,11 @@ include_directories(${LLVM_INCLUDE_DIRS})
 separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 add_definitions(${LLVM_DEFINITIONS_LIST})
 llvm_map_components_to_libnames(llvm_libs -18)
+
+add_executable(llvm_test tests/test.cpp)
+
+target_link_libraries(llvm_test PUBLIC ${llvm_libs})
+
+add_executable(compiler src/compiler.cpp src/visitor.cpp src/lexer.cpp src/parser.cpp src/type.cpp src/codegen.cpp)
+
+target_link_libraries(compiler PUBLIC ${llvm_libs})

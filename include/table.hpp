@@ -1,35 +1,76 @@
 #pragma once
 
-#include <unordered_map>
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/DerivedTypes.h"
-
+#include "ast.hpp"
 #include "type.hpp"
 
-using llvm::AllocaInst, llvm::Function, llvm::Value;
-using std::unordered_map, std::shared_ptr, std::make_shared, std::string, std::vector;
+using std::unordered_map;
 
 struct Symbol {
-    enum SymType { WAR, TREN };
-    AllocaInst *alloc = nullptr;
-    Function *func = nullptr;
-    vector<shared_ptr<ValueType>> args_types;
-    shared_ptr<ValueType> type;
-    SymType sym_type;
-    string name;
+    virtual const string& getName() const = 0;
+    virtual shared_ptr<ValueType> getType() const = 0;
+    virtual const vector<pair<string, shared_ptr<ValueType>>>& getArgs() const = 0;
+    
+    virtual ~Symbol() = default;
+};
 
-    Symbol(const string& name, shared_ptr<ValueType> type, SymType sym_type)
-        : name(name), type(type), sym_type(sym_type) {}
+struct ASTSym: public Symbol {
+    string name;
+    shared_ptr<ValueType> type;
+    vector<pair<string, shared_ptr<ValueType>>> args{};
+
+    const string& getName() const override { return name; }
+    shared_ptr<ValueType> getType() const override { return type; }
+    const vector<pair<string, shared_ptr<ValueType>>>& getArgs() const override { return args; }
+    
+    ASTSym(const string& name, shared_ptr<ValueType> type)
+        : name(name), type(type) {}
+    ASTSym(const string& name, shared_ptr<ValueType> type, vector<pair<string, shared_ptr<ValueType>>> args)
+        : name(name), type(type), args(std::move(args)) {}
+};
+
+class Scope {
+    unordered_map<string, shared_ptr<Symbol>> syms;
+    string name;
+public:
+    const string& getName() const { return name; }
+    
+    shared_ptr<Symbol> find_symbol(const string& name) {
+        return (syms.count(name)? syms[name] : nullptr);
+    }
+
+    void set_symbol(shared_ptr<Symbol> sym) {
+        syms[sym->getName()] = sym;
+    }
+
+    Scope(const string& name) : name(name) {}
 };
 
 class Table {
-    shared_ptr<Table> prev_tab;
-    unordered_map<string, shared_ptr<Symbol>> symbols;
+    vector<shared_ptr<Scope>> stack;
 public:
-    shared_ptr<Table> getPrev() { return prev_tab; }
+    shared_ptr<Scope> enter_scope(const string& name = "main") {
+        shared_ptr<Scope> sym = make_shared<Scope>(name);
+        stack.push_back(sym);
+        return sym;
+    }
+
+    shared_ptr<Symbol> find_symbol(const string& name) {
+        for(size_t i = 0, n = stack.size(); i < n; ++i)
+            if(shared_ptr<Symbol> sym = stack[i]->find_symbol(name))
+                return sym;
+
+        return nullptr;
+    }
+
+    void add_symbol(shared_ptr<Symbol> sym) {
+        stack.back()->set_symbol(sym);
+    }
+
+    shared_ptr<Scope> get_scope() {
+        return stack.back();
+    }
+    
+    void exit_scope() {
+        stack.pop_back();
+    }
 };

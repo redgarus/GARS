@@ -20,11 +20,11 @@ struct TOKEN {
         TREN, RETURN, 
 
         // Types
-        ARRAYTYPE, INTTYPE, BOOLTYPE, NONETYPE, REALTYPE,
+        ARRAYTYPE, INTTYPE, BOOLTYPE, NONETYPE, REALTYPE, PTRTYPE,
 
         // Ops
         LBRA, RBRA, LBAR, RBAR, LBRACE, RBRACE,
-        SEMICOL, COMMA, COL,
+        SEMICOL, COMMA, COL, ST,
         PLUS, MINUS, 
         DIV, MUL,
         ASSIGN,
@@ -33,7 +33,7 @@ struct TOKEN {
         // eof-tok and undefned-tok
         UNDEFINED, EOFILE, ERROR
     };
-
+    
     ll ival = 0;
     string word;
     lexeme tok;
@@ -42,8 +42,9 @@ struct TOKEN {
     TOKEN(lexeme tok, const string& word, int line) : tok(tok), word(word), line(line) {};
     TOKEN(lexeme tok, ll ival, int line) : tok(tok), ival(ival), line(line) {};
     TOKEN(lexeme tok, int line) : tok(tok), line(line) {}
-    TOKEN();
+    TOKEN() {}
 };
 
-ostream& operator<<(std::ostream& out, TOKEN tok);
-bool operator==(TOKEN tok, TOKEN::lexeme tok_lex);
+ostream& operator<<(std::ostream&, TOKEN);
+bool operator==(TOKEN, TOKEN::lexeme);
+bool operator!=(TOKEN, TOKEN::lexeme);

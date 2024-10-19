@@ -1,10 +1,12 @@
 #pragma once
 
-#include <iostream>
+
 #include <memory>
 #include <vector>
 
 #include "token.hpp"
+
+#include "llvm/IR/Module.h"
 
 using std::vector, std::unique_ptr, std::shared_ptr;
 
@@ -26,7 +28,7 @@ class CompilerVisitor: public IVisitor {
 public:
     vector<TOKEN> tokens;
     unique_ptr<Node> AST;
-    string Code;
+    unique_ptr<llvm::Module> mod;
 
     void visit(Lexer&) override;
     void visit(Parser&) override;
