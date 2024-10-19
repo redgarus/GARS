@@ -1,5 +1,6 @@
 old/
 arc/
+tests/
 .cache/
 .cmake/
 Testing/
@@ -10,3 +11,4 @@ CTestTestfile.cmake
 CMakeCache.txt
 build/
 cmake_install.cmake
+.gitignore
