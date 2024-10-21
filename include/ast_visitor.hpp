@@ -50,4 +50,6 @@ struct ASTVisitor {
     virtual Value *visit(IndexExpr&) = 0;
 
     virtual Value *visit(Input&) = 0;
+
+    virtual ~ASTVisitor() = default;
 };
