@@ -4,4 +4,49 @@ fn fib: int[int n] {
    return fib(n-1) + fib(n-2);
 }
 
-print(fib(10));
+fn factorial: int[int n] {
+   var a: int = 1;
+   
+   var i: int = 2;
+   alive by[i <= n] {
+       a = a * i;
+       i = i + 1;
+   }
+
+   return a;
+}
+
+fn ArifmeticSum: int[int a, int d, int n] {
+   var total: int = a;
+
+   var i: int = 1;
+   alive by[i <= n] {
+         total = total + a + (d * i);
+         i = i + 1;
+   }
+   
+   return total;
+}
+
+fn gcd: int[int a, int b] {
+   if[b == 0] {
+        return a;
+   }
+   return gcd(b, a - b * (a / b));
+}
+
+fn lcm: int[int a, int b] {
+   return (a * b) / gcd(a, b);
+}
+
+fn findMinPowerModulo: int[int a, int b, int m] {
+   var power: int = 1;
+   var remainder: int = a - m * (a / m);
+
+   alive by[remainder != power] {
+         remainder = (remainder * a) - m * ((remainder * a)/m);
+         power = power + 1;
+   }
+
+   return power;
+}
