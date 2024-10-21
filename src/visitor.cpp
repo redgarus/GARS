@@ -34,13 +34,14 @@ void CompilerVisitor::visit(Parser& parser) {
 }
 
 void CompilerVisitor::visit(Codegen& code) {
-    CodeVisitor *visitor = new CodeVisitor();
+   CodeVisitor *visitor = new CodeVisitor();
 
-    visitor->run();
+   visitor->run();
     
-    AST->accept(*visitor);
+   AST->accept(*visitor);
         
-    mod = std::move(visitor->getModule());
+   mod = std::move(visitor->getModule());
 
-    mod->print(llvm::errs(), nullptr);
-}
+   mod->print(llvm::errs(), nullptr);
+
+   delete visitor;
