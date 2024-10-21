@@ -45,3 +45,4 @@ void CompilerVisitor::visit(Codegen& code) {
    mod->print(llvm::errs(), nullptr);
 
    delete visitor;
+}
