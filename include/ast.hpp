@@ -8,7 +8,6 @@
 #include "ast_visitor.hpp"
 #include "type.hpp"
 #include "token.hpp"
-#include "codegen.hpp"
 
 using std::shared_ptr, std::unique_ptr, std::make_unique, std::make_shared, std::string, std::vector, std::pair;
 
